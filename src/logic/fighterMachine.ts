@@ -21,14 +21,16 @@ export const fighterMachine = setup({
         PUNCH: 'attacking',
         BLOCK: 'counterWindow',
         SPECIAL_MOVE: 'specialMove',
-        WALK: 'walking'
+        WALK: 'walking',
+        HIT_RECEIVED: 'hurt'
       }
     },
     walking: {
       on: {
         PUNCH: 'attacking',
         BLOCK: 'counterWindow',
-        STOP: 'idle'
+        STOP: 'idle',
+        HIT_RECEIVED: 'hurt'
       }
     },
     counterWindow: {
@@ -44,10 +46,20 @@ export const fighterMachine = setup({
       after: { 500: 'idle' }
     },
     attacking: {
-      after: { 400: 'idle' }
+      after: { 400: 'idle' },
+      on: {
+         HIT_RECEIVED: 'hurt' // Counter-hit logic
+      }
     },
     specialMove: {
-        after: { 1000: 'idle' }
+        after: { 1000: 'idle' },
+        on: {
+            HIT_RECEIVED: 'hurt'
+        }
+    },
+    hurt: {
+        entry: () => console.log("Ouch!"),
+        after: { 500: 'idle' }
     }
   }
 });
