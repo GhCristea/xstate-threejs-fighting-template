@@ -53,6 +53,11 @@ const aiController = new AIController(npc, player);
 camera.position.set(0, 3, 8);
 camera.lookAt(0, 1, 0);
 
+// --- UI ELEMENTS ---
+const p1HpBar = document.getElementById('p1-hp');
+const p2HpBar = document.getElementById('p2-hp');
+const koScreen = document.getElementById('ko-screen');
+
 // --- GAME LOOP ---
 const CLOCK = new THREE.Clock();
 const FIXED_TIME_STEP = 1 / 60;
@@ -99,6 +104,9 @@ function updateGameLogic(dt: number) {
 
     // 4. Collisions
     checkCollisions();
+
+    // 5. Update UI
+    updateUI();
 }
 
 function checkCollisions() {
@@ -109,8 +117,7 @@ function checkCollisions() {
 
     // Player Hits NPC
     if (pState.matches('attacking') && dist < HIT_RANGE) {
-        if (!nState.matches('hurt') && !nState.matches('blocking') && !nState.matches('counterWindow')) {
-            console.log("Player Hit NPC!");
+        if (!nState.matches('hurt') && !nState.matches('blocking') && !nState.matches('counterWindow') && !nState.matches('ko')) {
             npc.actor.send({ type: 'HIT_RECEIVED' });
             npc.mesh.position.x += 0.3; 
         }
@@ -118,11 +125,25 @@ function checkCollisions() {
 
     // NPC Hits Player
     if (nState.matches('attacking') && dist < HIT_RANGE) {
-        if (!pState.matches('hurt') && !pState.matches('blocking') && !pState.matches('counterWindow')) {
-             console.log("NPC Hit Player!");
+        if (!pState.matches('hurt') && !pState.matches('blocking') && !pState.matches('counterWindow') && !pState.matches('ko')) {
             player.actor.send({ type: 'HIT_RECEIVED' });
             player.mesh.position.x -= 0.3;
         }
+    }
+}
+
+function updateUI() {
+    const p1State = player.actor.getSnapshot();
+    const p2State = npc.actor.getSnapshot();
+
+    const p1Pc = (p1State.context.hp / p1State.context.maxHp) * 100;
+    const p2Pc = (p2State.context.hp / p2State.context.maxHp) * 100;
+
+    if (p1HpBar) p1HpBar.style.width = `${p1Pc}%`;
+    if (p2HpBar) p2HpBar.style.width = `${p2Pc}%`;
+
+    if (p1State.matches('ko') || p2State.matches('ko')) {
+        if (koScreen) koScreen.style.display = 'block';
     }
 }
 
