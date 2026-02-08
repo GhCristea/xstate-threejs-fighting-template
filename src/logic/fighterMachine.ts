@@ -1,15 +1,25 @@
-import { setup } from 'xstate';
+import { setup, assign } from 'xstate';
 
 export const fighterMachine = setup({
   types: {
     context: {} as any,
     input: {} as any,
     events: {} as any
+  },
+  actions: {
+    takeDamage: assign({
+      hp: ({ context }) => Math.max(0, context.hp - 10) 
+    })
+  },
+  guards: {
+    isDead: ({ context }) => context.hp <= 0
   }
 }).createMachine({
   id: 'fighter',
   context: ({ input }) => ({
     name: input.name,
+    hp: input.stats.maxHp,
+    maxHp: input.stats.maxHp,
     stamina: 100,
     regenRate: input.stats.staminaRegen,
     currentMove: null
@@ -34,12 +44,8 @@ export const fighterMachine = setup({
       }
     },
     counterWindow: {
-      after: {
-        300: { target: 'idle' }
-      },
-      on: {
-        HIT_RECEIVED: 'reversal'
-      }
+      after: { 300: { target: 'idle' } },
+      on: { HIT_RECEIVED: 'reversal' }
     },
     reversal: {
       entry: () => console.log("Momentum Redirected!"),
@@ -47,19 +53,24 @@ export const fighterMachine = setup({
     },
     attacking: {
       after: { 400: 'idle' },
-      on: {
-         HIT_RECEIVED: 'hurt' // Counter-hit logic
-      }
+      on: { HIT_RECEIVED: 'hurt' } 
     },
     specialMove: {
         after: { 1000: 'idle' },
-        on: {
-            HIT_RECEIVED: 'hurt'
-        }
+        on: { HIT_RECEIVED: 'hurt' }
     },
     hurt: {
-        entry: () => console.log("Ouch!"),
-        after: { 500: 'idle' }
+        entry: 'takeDamage',
+        after: { 
+            500: [
+                { guard: 'isDead', target: 'ko' }, 
+                { target: 'idle' }
+            ]
+        }
+    },
+    ko: {
+        entry: () => console.log("KNOCKOUT!"),
+        type: 'final' 
     }
   }
 });
