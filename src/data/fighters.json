@@ -2,7 +2,7 @@
   "steven_seagal": {
     "name": "Steven Seagal",
     "style": "Aikido Noir",
-    "stats": { "staminaRegen": 1.5, "counterWindow": 400 },
+    "stats": { "staminaRegen": 1.5, "counterWindow": 400, "maxHp": 100 },
     "moves": {
       "special": { "name": "Joint Lock Orchestra", "damage": 20 }
     }
@@ -10,7 +10,7 @@
   "chuck_norris": {
     "name": "Chuck Norris",
     "style": "Texas Thunder",
-    "stats": { "staminaRegen": 1.0, "counterWindow": 200 },
+    "stats": { "staminaRegen": 1.0, "counterWindow": 200, "maxHp": 120 },
     "moves": {
       "special": { "name": "Roundhouse Citation", "damage": 50 }
     }
