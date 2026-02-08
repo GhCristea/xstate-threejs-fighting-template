@@ -73,52 +73,55 @@ function animate() {
 }
 
 function updateGameLogic(dt: number) {
-    // 1. Update Player via Input
+    // 1. Update Player
     const intent = inputSystem.update();
     if (intent) {
-        if (intent.type === 'COMBO') player.actor.send({ type: 'SPECIAL_MOVE', name: intent.name });
-        if (intent.type === 'ATTACK') player.actor.send({ type: 'PUNCH', variant: intent.variant });
+        if (intent.type === 'COMBO') player.actor.send({ type: 'SPECIAL_MOVE', name: intent.name } as any);
+        if (intent.type === 'ATTACK') player.actor.send({ type: 'PUNCH', variant: intent.variant } as any);
         if (intent.type === 'BLOCK') player.actor.send({ type: 'BLOCK' });
         
-        // Movement is handled by the Actor's move method now
         if (intent.type === 'MOVEMENT') {
             player.move(intent.vector, dt);
         }
+    } else {
+        const pState = player.actor.getSnapshot();
+        if (pState.matches('walking')) {
+            player.actor.send({ type: 'STOP' });
+        }
     }
 
-    // 2. Update NPC via AI
+    // 2. Update NPC
     aiController.update(dt);
 
-    // 3. Update Actor Internal Logic (Visual sync, state expiry)
+    // 3. Sync Visuals
     player.update(dt);
     npc.update(dt);
 
-    // 4. Global Collision / Rules
+    // 4. Collisions
     checkCollisions();
 }
 
 function checkCollisions() {
-    // Simple Box collision for Hit detection
     const pState = player.actor.getSnapshot();
     const nState = npc.actor.getSnapshot();
     const dist = player.position.distanceTo(npc.position);
-    const HIT_RANGE = 1.2;
+    const HIT_RANGE = 1.5;
 
-    // Player Hitting NPC
+    // Player Hits NPC
     if (pState.matches('attacking') && dist < HIT_RANGE) {
-        if (!nState.matches('blocking') && !nState.matches('counterWindow')) {
+        if (!nState.matches('hurt') && !nState.matches('blocking') && !nState.matches('counterWindow')) {
+            console.log("Player Hit NPC!");
             npc.actor.send({ type: 'HIT_RECEIVED' });
-            // Knockback
-            npc.mesh.position.x += 0.2; 
+            npc.mesh.position.x += 0.3; 
         }
     }
 
-    // NPC Hitting Player
+    // NPC Hits Player
     if (nState.matches('attacking') && dist < HIT_RANGE) {
-        if (!pState.matches('blocking') && !pState.matches('counterWindow')) {
+        if (!pState.matches('hurt') && !pState.matches('blocking') && !pState.matches('counterWindow')) {
+             console.log("NPC Hit Player!");
             player.actor.send({ type: 'HIT_RECEIVED' });
-            // Knockback
-            player.mesh.position.x -= 0.2;
+            player.mesh.position.x -= 0.3;
         }
     }
 }
