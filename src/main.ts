@@ -28,21 +28,11 @@ scene.add(floor);
 
 // --- INIT ACTORS ---
 // 1. Player (Seagal)
-const player = new FighterActor(
-    scene, 
-    new THREE.Vector3(-2, 1, 0), 
-    0x00ff00, // Green
-    fighterData.steven_seagal
-);
+const player = new FighterActor(scene, new THREE.Vector3(-2, 1, 0), 0x00ff00, fighterData.steven_seagal);
 player.start();
 
 // 2. NPC (Chuck)
-const npc = new FighterActor(
-    scene, 
-    new THREE.Vector3(2, 1, 0), 
-    0xff0000, // Red
-    fighterData.chuck_norris
-);
+const npc = new FighterActor(scene, new THREE.Vector3(2, 1, 0), 0xff0000, fighterData.chuck_norris);
 npc.start();
 
 // --- INIT SYSTEMS ---
@@ -66,17 +56,17 @@ engine.onTick((dt) => {
     // 1. Update Player
     const intent = inputSystem.update();
     if (intent) {
-        if (intent.type === 'COMBO') player.actor.send({ type: 'SPECIAL_MOVE', name: intent.name } as any);
-        if (intent.type === 'ATTACK') player.actor.send({ type: 'PUNCH', variant: intent.variant } as any);
-        if (intent.type === 'BLOCK') player.actor.send({ type: 'BLOCK' });
-        
+        if (intent.type === 'COMBO') player.send({ type: 'SPECIAL_MOVE', name: intent.name });
+        if (intent.type === 'ATTACK') player.send({ type: 'PUNCH', variant: intent.variant });
+        if (intent.type === 'BLOCK') player.send({ type: 'BLOCK' });
+
         if (intent.type === 'MOVEMENT') {
             player.move(intent.vector, dt);
         }
     } else {
         const pState = player.actor.getSnapshot();
         if (pState.matches('walking')) {
-            player.actor.send({ type: 'STOP' });
+            player.send({ type: 'STOP' });
         }
     }
 
@@ -109,15 +99,15 @@ function checkCollisions() {
     // Player Hits NPC
     if (pState.matches('attacking') && dist < HIT_RANGE) {
         if (!nState.matches('hurt') && !nState.matches('blocking') && !nState.matches('counterWindow') && !nState.matches('ko')) {
-            npc.actor.send({ type: 'HIT_RECEIVED' });
-            npc.mesh.position.x += 0.3; 
+            npc.send({ type: 'HIT_RECEIVED' });
+            npc.mesh.position.x += 0.3;
         }
     }
 
     // NPC Hits Player
     if (nState.matches('attacking') && dist < HIT_RANGE) {
         if (!pState.matches('hurt') && !pState.matches('blocking') && !pState.matches('counterWindow') && !pState.matches('ko')) {
-            player.actor.send({ type: 'HIT_RECEIVED' });
+            player.send({ type: 'HIT_RECEIVED' });
             player.mesh.position.x -= 0.3;
         }
     }

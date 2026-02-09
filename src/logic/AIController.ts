@@ -20,7 +20,7 @@ export class AIController {
 
         const dist = this.npc.position.distanceTo(this.target.position);
         const dx = this.target.position.x - this.npc.position.x;
-        
+
         const attackRange = 1.6;
 
         if (dist > attackRange) {
@@ -29,11 +29,11 @@ export class AIController {
         } else {
             const roll = Math.random();
             if (roll > 0.4) {
-                this.npc.actor.send({ type: 'PUNCH', variant: 'heavy' } as any);
+                this.npc.send({ type: 'PUNCH', variant: 'heavy' });
             } else if (roll > 0.2) {
-                this.npc.actor.send({ type: 'BLOCK' });
+                this.npc.send({ type: 'BLOCK' });
             } else {
-                this.npc.actor.send({ type: 'STOP' });
+                this.npc.send({ type: 'STOP' });
             }
         }
     }

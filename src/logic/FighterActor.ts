@@ -2,16 +2,24 @@ import * as THREE from 'three';
 import { createActor, Actor } from 'xstate';
 import { fighterMachine } from './fighterMachine';
 
+export type FighterEvent =
+    | { type: 'PUNCH'; variant: 'light' | 'heavy' }
+    | { type: 'BLOCK' }
+    | { type: 'SPECIAL_MOVE'; name: string }
+    | { type: 'WALK' }
+    | { type: 'STOP' }
+    | { type: 'HIT_RECEIVED' };
+
 export class FighterActor {
     mesh: THREE.Mesh;
     actor: Actor<any>;
     scene: THREE.Scene;
     baseColor: number;
-    
+
     constructor(scene: THREE.Scene, startPos: THREE.Vector3, color: number, fighterData: any) {
         this.scene = scene;
         this.baseColor = color;
-        
+
         // 1. Setup Visuals
         const geometry = new THREE.BoxGeometry(1, 2, 0.5);
         const material = new THREE.MeshStandardMaterial({ color: color });
@@ -29,22 +37,27 @@ export class FighterActor {
         this.actor.start();
     }
 
+    send(event: FighterEvent) {
+        // Keep the escape hatch in one place until we decide how strict we want XState typing.
+        this.actor.send(event as any);
+    }
+
     update(dt: number) {
         const snapshot = this.actor.getSnapshot();
         this.syncVisuals(snapshot);
     }
 
-    move(vector: { x: number, y: number }, dt: number) {
+    move(vector: { x: number; y: number }, dt: number) {
         const snapshot = this.actor.getSnapshot();
-        
+
         if (snapshot.matches('idle') || snapshot.matches('walking')) {
             this.mesh.position.x += vector.x * 5 * dt;
             this.mesh.position.x = Math.max(-9, Math.min(9, this.mesh.position.x));
 
             if (vector.x !== 0) {
-                this.actor.send({ type: 'WALK' });
+                this.send({ type: 'WALK' });
             } else {
-                this.actor.send({ type: 'STOP' });
+                this.send({ type: 'STOP' });
             }
         }
     }
@@ -54,7 +67,7 @@ export class FighterActor {
         const material = this.mesh.material as THREE.MeshStandardMaterial;
 
         if (state === 'attacking') {
-            material.color.setHex(0xff0000); 
+            material.color.setHex(0xff0000);
         } else if (state === 'counterWindow' || state === 'blocking') {
             material.color.setHex(0xffff00);
         } else if (state === 'hurt') {
@@ -65,7 +78,7 @@ export class FighterActor {
             material.color.setHex(this.baseColor);
         }
     }
-    
+
     get position() {
         return this.mesh.position;
     }
