@@ -6,11 +6,11 @@
 
 ## Context map (progressive disclosure)
 
-| Domain | File | Read when… |
-|---|---|---|
-| Architecture | `docs/agents/architecture.md` | Editing the game loop, fixed timestep, state→visual sync. |
-| Conventions | `docs/agents/conventions.md` | Adding features, events, new actors, input logic, persistence. |
-| Testing | `docs/agents/testing.md` | Debugging timing issues, writing tests, or verifying determinism. |
+| Domain       | File                          | Read when…                                                        |
+| ------------ | ----------------------------- | ----------------------------------------------------------------- |
+| Architecture | `docs/agents/architecture.md` | Editing the game loop, fixed timestep, state→visual sync.         |
+| Conventions  | `docs/agents/conventions.md`  | Adding features, events, new actors, input logic, persistence.    |
+| Testing      | `docs/agents/testing.md`      | Debugging timing issues, writing tests, or verifying determinism. |
 
 ## Quick actions
 

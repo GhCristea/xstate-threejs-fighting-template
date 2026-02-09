@@ -68,6 +68,7 @@ src/
 ### 1. Decoupled Visuals (New)
 
 Logic and rendering are completely separated.
+
 - **`FighterActor`** (Logic) is pure TypeScript. It has no idea `Three.js` exists. It runs the XState machine and updates coordinates.
 - **`RendererSystem`** (Visuals) lives in `main.ts`. It polls the actor's `visualState` (position, color code) and updates the meshes.
 
@@ -76,6 +77,7 @@ This means you can run the game logic in a headless test environment (Node.js) w
 ### 2. Type Islands
 
 We use "Pragmatic TypeScript" to balance safety and velocity:
+
 - **Strict Boundaries**: Inputs, Events, and State Context are strongly typed.
 - **Loose Internals**: We allow some flexibility inside implementation details to prevent type gymnastics.
 - **Adapters**: `FighterActor.send()` acts as a typed gateway, preventing `any` casts from leaking into the game loop.
@@ -129,16 +131,16 @@ sequenceDiagram
   Engine->>Main: tick(dt)
   Main->>Main: Input & AI
   Main->>Logic: update(dt) / send(event)
-  
+
   Note over Main, Vis: One-way data flow
   Main->>Vis: update()
   Vis->>Logic: get visualState
   Logic-->>Vis: { x, y, color }
   Vis->>Three: mesh.position.set(...)
-  
+
   Main->>Main: checkCollisions()
   Main->>HUD: updateUI()
-  
+
   Engine->>Main: render()
   Main->>Three: renderer.render()
 ```
