@@ -13,7 +13,7 @@ This document is the "constitution" for the engine. If you change the loop, keep
 
 ### Body (rendering)
 
-- **Where:** `src/main.ts`, `src/logic/FighterActor.ts`
+- **Where:** `src/logic/FighterActor.ts`
 - **Tech:** Three.js
 - **Owns:** Scene graph, meshes, materials, animations, camera
 - **Must not:** Compute damage, decide move legality, or store canonical match state
@@ -26,38 +26,40 @@ This document is the "constitution" for the engine. If you change the loop, keep
 
 ## The fixed timestep loop
 
-`src/main.ts` uses a semi-fixed timestep accumulator:
+The loop logic is encapsulated in `src/core/GameEngine.ts`. It uses a semi-fixed timestep accumulator.
 
-- Render: once per `requestAnimationFrame`
-- Logic: multiple fixed updates per frame if needed (to catch up)
+- **`tick(dt)`**: Runs multiple times per frame if needed (logic, physics, AI). Fixed `dt` (e.g., 1/60).
+- **`render()`**: Runs once per frame (visuals).
 
-Pseudo:
+Pseudo-implementation (in `GameEngine.ts`):
 
 ```ts
-function animate() {
+loop() {
+  requestID = requestAnimationFrame(loop);
   const delta = clock.getDelta();
   accumulator += delta;
 
-  while (accumulator >= FIXED_STEP) {
-    updateGameLogic(FIXED_STEP);
-    accumulator -= FIXED_STEP;
+  while (accumulator >= fixedTimeStep) {
+    this.tick(fixedTimeStep); // Emits 'tick' event
+    accumulator -= fixedTimeStep;
   }
-
-  renderer.render(scene, camera);
+  
+  this.render(); // Emits 'render' event
 }
 ```
 
-### What belongs in `updateGameLogic()`
+### What belongs in the `tick` callback
 
 - Read intents from `InputSystem`
 - Run AI decisions (throttled)
 - Run collisions + send `HIT_RECEIVED`
 - Read snapshots for HUD percentages
+- Update actor logic (state transitions)
 
-### What belongs in `animate()` only
+### What belongs in the `render` callback
 
 - `renderer.render(scene, camera)`
-- Non-authoritative interpolation (if you add it later)
+- Non-authoritative interpolation (if added later)
 
 ## Adding a feature: placement test
 

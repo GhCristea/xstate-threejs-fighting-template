@@ -45,23 +45,38 @@ export const fighterMachine = setup({
 ❌ Bad (rules in render phase):
 
 ```ts
-function animate() {
-  if (keyboard.space) {
-    // gameplay / physics in variable timestep render
-    mesh.position.y += 1;
-  }
-  renderer.render(scene, camera);
+// Inside a render loop
+if (keyboard.space) {
+  mesh.position.y += 1; // Physics inside variable render phase!
 }
+renderer.render(scene, camera);
 ```
 
 ✅ Good (state-driven visuals):
 
 ```ts
-// FighterActor.update(dt)
+// FighterActor.update(dt) - called during fixed tick
 const snap = this.actor.getSnapshot();
 if (snap.matches('hurt')) {
   (this.mesh.material as THREE.MeshStandardMaterial).color.setHex(0xffffff);
 }
+```
+
+## Game Loop
+
+**Rule:** Use `GameEngine` for loop management. Do not write raw `requestAnimationFrame` loops in `main.ts`.
+
+✅ Good:
+
+```ts
+const engine = new GameEngine();
+engine.onTick((dt) => {
+  // Fixed update logic
+});
+engine.onRender(() => {
+  renderer.render(scene, camera);
+});
+engine.start();
 ```
 
 ## Input
@@ -104,3 +119,12 @@ const profile = await profileRepo.load();
 // then send event to actor, don’t mutate context directly
 actor.send({ type: 'LOAD_PROFILE', profile } as any);
 ```
+
+## Folder boundaries
+
+- `src/core/`: engine infrastructure (GameEngine)
+- `src/logic/`: state machines, actor wrappers, AI
+- `src/input/`: input mapping + buffering
+- `src/data/`: static JSON content
+- `src/db/`: persistence
+- `src/main.ts`: composition root (wires everything together)
