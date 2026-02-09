@@ -1,38 +1,106 @@
-# Coding conventions
+# Coding conventions (few-shot)
 
-These rules are here to stop accidental architecture drift.
+LLMs follow concrete diffs better than abstract warnings. Prefer examples.
 
 ## XState (Logic)
 
-- Use **XState v5** patterns: `setup(...)`, `createMachine(...)`, `createActor(...)`.
-- Hydrate machines with **`input`** (from JSON/DB). Avoid hardcoded stats inside the machine when possible.
-- Never mutate actor context from outside. Communicate via `.send({ type: 'EVENT' })`.
+**Rule:** XState is the source of truth. Machines are pure (no Three.js, no DOM).
+
+❌ Bad (hardcoded + coupled):
+
+```ts
+import { createMachine } from 'xstate';
+
+export const machine = createMachine({
+  context: { hp: 100 },
+  actions: {
+    render: () => mesh.material.color.set('red') // Three.js in logic
+  }
+});
+```
+
+✅ Good (hydrated + pure):
+
+```ts
+import { setup, assign } from 'xstate';
+
+export const fighterMachine = setup({
+  actions: {
+    takeDamage: assign({
+      hp: ({ context }) => Math.max(0, context.hp - 10)
+    })
+  }
+}).createMachine({
+  context: ({ input }) => ({
+    hp: input.stats.maxHp,
+    maxHp: input.stats.maxHp
+  })
+});
+```
 
 ## Three.js (Visuals)
 
-- Don’t allocate new geometries/materials every frame.
-- Sync visuals from state snapshots: `actor.getSnapshot().matches('state')`.
-- If you add temporary objects (particles, decals), dispose geometry/materials when removed.
+**Rule:** Visuals are a function of state (read snapshot → render), not the other way around.
 
-## Input system
+❌ Bad (rules in render phase):
 
-- Keyboard events translate to **actions**, actions become **intents**.
-- Combo detection should use the input buffer; do not embed combo logic inside XState.
+```ts
+function animate() {
+  if (keyboard.space) {
+    // gameplay / physics in variable timestep render
+    mesh.position.y += 1;
+  }
+  renderer.render(scene, camera);
+}
+```
+
+✅ Good (state-driven visuals):
+
+```ts
+// FighterActor.update(dt)
+const snap = this.actor.getSnapshot();
+if (snap.matches('hurt')) {
+  (this.mesh.material as THREE.MeshStandardMaterial).color.setHex(0xffffff);
+}
+```
+
+## Input
+
+**Rule:** No `addEventListener` inside actors/machines. InputSystem produces intents.
+
+✅ Good:
+
+```ts
+// main.ts
+const intent = inputSystem.update();
+if (intent?.type === 'ATTACK') {
+  player.actor.send({ type: 'PUNCH', variant: intent.variant } as any);
+}
+```
 
 ## Collisions
 
-- Prefer a single collision pass in the fixed-timestep update.
-- Avoid "infinite hit" bugs: debounce hits (state gate like `!matches('hurt')`, active-frame IDs, or hit tokens).
+**Rule:** One collision pass per fixed update, and debounce hits.
 
-## Persistence (Drizzle / SQLite)
+✅ Good (state gate debounce):
 
-- Schema lives in `src/db/schema.ts`.
-- Keep persistence adapters thin; `main.ts` should request/save state, not have SQL details everywhere.
+```ts
+if (attacker.matches('attacking') && dist < HIT_RANGE) {
+  if (!defender.matches('hurt') && !defender.matches('ko')) {
+    defenderActor.send({ type: 'HIT_RECEIVED' });
+  }
+}
+```
 
-## Folder boundaries
+## Persistence
 
-- `src/logic/`: state machines, actor wrappers, AI
-- `src/input/`: input mapping + buffering
-- `src/data/`: static JSON content
-- `src/db/`: persistence
-- `src/main.ts`: composition root (loop + systems wiring)
+**Rule:** Keep persistence adapters thin; don’t spread DB code across gameplay.
+
+✅ Good:
+
+```ts
+// main.ts (composition root)
+const profile = await profileRepo.load();
+// then send event to actor, don’t mutate context directly
+actor.send({ type: 'LOAD_PROFILE', profile } as any);
+```

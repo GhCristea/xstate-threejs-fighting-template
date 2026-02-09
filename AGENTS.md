@@ -1,37 +1,44 @@
 # AGENTS.md
 
-> **Stop & read**: This repository uses a strict **fixed-timestep (semi-deterministic) game loop**.
+> **SYSTEM INSTRUCTION**: You are an expert game engine developer working in a strict fixed-timestep architecture.
 >
-> - **No React.**
-> - Keep **rules** in XState, keep **rendering** in Three.js.
-> - Avoid writing gameplay logic inside the variable render phase.
+> BEFORE making changes, confirm you’ve read the correct domain doc from the map below.
 
-## What this repo is
+## Context map (progressive disclosure)
 
-A minimal fighting-game template using:
+| Domain | File | Read when… |
+|---|---|---|
+| Architecture | `docs/agents/architecture.md` | Editing the game loop, fixed timestep, state→visual sync. |
+| Conventions | `docs/agents/conventions.md` | Adding features, events, new actors, input logic, persistence. |
+| Testing | `docs/agents/testing.md` | Debugging timing issues, writing tests, or verifying determinism. |
 
-- **Logic (Brain):** XState v5 (`src/logic/fighterMachine.ts`)
-- **Visuals (Body):** Three.js (`src/main.ts`, `src/logic/FighterActor.ts`)
-- **Input (Nerves):** Buffered keyboard intents (`src/input/InputSystem.ts`)
-- **UI (HUD):** DOM overlay (`index.html`)
-
-## Progressive disclosure map
-
-If you’re touching code, read the smallest relevant doc first:
-
-1. **Start here:** [`README.md`](README.md)
-2. **If editing the loop or architecture:** [`docs/agents/architecture.md`](docs/agents/architecture.md)
-3. **If adding features:** [`docs/agents/conventions.md`](docs/agents/conventions.md)
-
-## Critical boundaries (non-negotiable)
-
-1. **Visuals are slaves:** Three.js meshes never decide rules; they only reflect state.
-2. **No gameplay in render phase:** Put rules, collisions, and state transitions in the fixed-timestep update.
-3. **Inputs are buffered:** Don’t bind `keydown` to gameplay directly; go through `InputSystem`.
-
-## Quick commands
+## Quick actions
 
 ```bash
-npm install
 npm run dev
+npm run build
 ```
+
+## Critical boundaries (kill list)
+
+1. **No React in the game loop.** Keep it vanilla TS + Three.js + XState.
+2. **No gameplay rules in the render phase.** Put rules/collisions/state transitions in the fixed update.
+3. **No direct DOM writes from actors.** Only the orchestrator (`src/main.ts`) updates HUD.
+4. **No magic strings for events.** Centralize event names (constants) as the project grows.
+
+## Tool compatibility
+
+These tools often auto-detect specific filenames:
+
+- **Cursor**: `.cursorrules`
+- **Claude Code**: `CLAUDE.md`
+- **Aider**: `CONTRIBUTING.md` or custom instructions file
+
+This repo keeps the source of truth here in `AGENTS.md`.
+
+If your tool doesn’t follow `AGENTS.md` by default, either:
+
+- Create a symlink locally:
+  - `ln -s AGENTS.md .cursorrules`
+  - `ln -s AGENTS.md CLAUDE.md`
+- Or copy the content (CI / Windows environments often prefer copies).
