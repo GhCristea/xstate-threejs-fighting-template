@@ -116,6 +116,8 @@ actor.send({ type: 'LOAD_PROFILE', profile } as any)
 - `src/core/`: engine infrastructure (GameEngine)
 - `src/logic/`: state machines, actor wrappers, AI
 - `src/input/`: input mapping + buffering
+- `src/physics/`: collision logic
+- `src/systems/`: visual systems (Renderer)
 - `src/data/`: static JSON content
 - `src/db/`: persistence
 - `src/main.ts`: composition root (wires everything together)

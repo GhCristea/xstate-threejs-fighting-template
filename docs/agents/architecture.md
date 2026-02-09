@@ -13,7 +13,7 @@ This document is the "constitution" for the engine. If you change the loop, keep
 
 ### Body (rendering)
 
-- **Where:** `src/logic/FighterActor.ts`
+- **Where:** `src/systems/RendererSystem.ts`
 - **Tech:** Three.js
 - **Owns:** Scene graph objects (meshes/materials/animations) and state→visual mapping
 - **Must not:** Compute damage, decide move legality, or store canonical match state

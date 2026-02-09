@@ -59,6 +59,10 @@ src/
     FighterActor.ts          # Logic wrapper (Position/State, NO THREE.JS)
     AIController.ts          # Simple NPC brain
     types.ts                 # Shared types (FighterEvent, Intent, Context)
+  physics/
+    CollisionSystem.ts       # Pure math collision checks
+  systems/
+    RendererSystem.ts        # Three.js visualizer (The "Body")
   db/
     schema.ts                # Drizzle schema (Future persistence)
 ```
@@ -70,7 +74,7 @@ src/
 Logic and rendering are completely separated.
 
 - **`FighterActor`** (Logic) is pure TypeScript. It has no idea `Three.js` exists. It runs the XState machine and updates coordinates.
-- **`RendererSystem`** (Visuals) lives in `main.ts`. It polls the actor's `visualState` (position, color code) and updates the meshes.
+- **`RendererSystem`** (Visuals) lives in `src/systems/RendererSystem.ts`. It polls the actor's `visualState` (position, color code) and updates the meshes.
 
 This means you can run the game logic in a headless test environment (Node.js) without WebGL crashes.
 
@@ -106,7 +110,7 @@ flowchart LR
   end
 
   subgraph Visuals [Three.js]
-    RenderSys[RendererSystem]
+    RenderSys[src/systems/RendererSystem]
     Meshes[Meshes]
   end
 
