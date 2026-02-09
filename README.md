@@ -3,7 +3,7 @@
 A minimal, deterministic(ish) in-browser fighting-game template:
 
 - **Brain**: [XState](https://xstate.js.org/) for character logic (idle/walk/attack/hurt/KO).
-- **Body**: [Three.js](https://threejs.org/) for visuals.
+- **Body**: [Three.js](https://threejs.org/) for visuals (decoupled from logic).
 - **Nerves**: Input buffering + action mapping (keyboard today; gamepad later).
 - **HUD**: Plain HTML/CSS overlay (health bars + K.O. screen).
 
@@ -47,50 +47,48 @@ Combos are detected via the input buffer; currently registered in `src/main.ts`:
 
 ```text
 src/
-  main.ts                    # Composition root (wires engine, systems, HUD)
+  main.ts                    # Composition root (wires engine, systems, renderer, HUD)
   core/
-    GameEngine.ts            # Fixed-timestep loop + tick/render callbacks (no Three.js dependency)
+    GameEngine.ts            # Fixed-timestep loop + tick/render callbacks
   data/
     fighters.json            # Character definitions (maxHp, etc.)
   input/
-    InputSystem.ts           # Action mapping + input buffer + combo detection
+    InputSystem.ts           # Input buffering & combo detection (Typed Intent)
   logic/
-    fighterMachine.ts        # XState fighter machine (HP, KO)
-    FighterActor.ts          # Wraps mesh + XState actor
+    fighterMachine.ts        # XState fighter machine (Pure Logic)
+    FighterActor.ts          # Logic wrapper (Position/State, NO THREE.JS)
     AIController.ts          # Simple NPC brain
+    types.ts                 # Shared types (FighterEvent, Intent, Context)
   db/
-    schema.ts                # Drizzle (placeholder; not wired into runtime yet)
+    schema.ts                # Drizzle schema (Future persistence)
 ```
 
 ## Architecture
 
+### 1. Decoupled Visuals (New)
+
+Logic and rendering are completely separated.
+
+- **`FighterActor`** (Logic) is pure TypeScript. It has no idea `Three.js` exists. It runs the XState machine and updates coordinates.
+- **`RendererSystem`** (Visuals) lives in `main.ts`. It polls the actor's `visualState` (position, color code) and updates the meshes.
+
+This means you can run the game logic in a headless test environment (Node.js) without WebGL crashes.
+
+### 2. Type Islands
+
+We use "Pragmatic TypeScript" to balance safety and velocity:
+
+- **Strict Boundaries**: Inputs, Events, and State Context are strongly typed.
+- **Loose Internals**: We allow some flexibility inside implementation details to prevent type gymnastics.
+- **Adapters**: `FighterActor.send()` acts as a typed gateway, preventing `any` casts from leaking into the game loop.
+
 ### Core loop
 
-- **`GameEngine`** (`src/core/GameEngine.ts`) owns the fixed-timestep accumulator and scheduling.
-- `GameEngine` is intentionally **decoupled** from Three.js; it uses an injected (or default) time source + scheduler.
-- `main.ts` registers a tick callback (logic) and a render callback (renderer).
-
-Key files:
-
-- `src/core/GameEngine.ts`: reusable loop logic.
-- `src/main.ts`: wires systems together.
-- `src/logic/FighterActor.ts`: "entity" wrapper.
-- `src/logic/fighterMachine.ts`: rules + HP + KO.
-
-### Health + KO
-
-- `fighters.json` defines `maxHp` per character.
-- `fighterMachine.ts` initializes `context.hp/maxHp` from input.
-- On `HIT_RECEIVED`, fighter enters `hurt`, applies damage, then transitions to `ko` (final) if `hp <= 0`.
-
-### HUD
-
-`index.html` contains a fixed-position HUD overlay:
-
-- Two health bars bound to `#p1-hp` and `#p2-hp`
-- KO banner bound to `#ko-screen`
-
-`src/main.ts` reads XState snapshots and updates DOM widths as percentages in the tick loop.
+- **`GameEngine`** (`src/core/GameEngine.ts`) owns the fixed-timestep accumulator.
+- `main.ts` wires the pieces:
+  1. **Tick (Logic)**: Input -> AI -> Actors -> Collisions
+  2. **Update Visuals**: Logic State -> Three.js Meshes
+  3. **Render**: Scene -> Canvas
 
 ## Mermaid diagrams
 
@@ -102,11 +100,20 @@ flowchart LR
   Input[InputSystem] --> Main
   AI[AIController] --> Main
 
-  Main --> P1[FighterActor: Player]
-  Main --> P2[FighterActor: NPC]
+  subgraph Logic [Pure Typescript]
+    P1[FighterActor: Player]
+    P2[FighterActor: NPC]
+  end
 
-  P1 --> Three[Three.js]
-  P2 --> Three
+  subgraph Visuals [Three.js]
+    RenderSys[RendererSystem]
+    Meshes[Meshes]
+  end
+
+  Main --> Logic
+  Main --> RenderSys
+  RenderSys -.->|Reads State| Logic
+  RenderSys --> Meshes
 
   Main --> HUD[DOM HUD]
 ```
@@ -117,17 +124,23 @@ flowchart LR
 sequenceDiagram
   participant Engine as GameEngine
   participant Main as main.ts
-  participant P1 as FighterActor(Player)
-  participant P2 as FighterActor(NPC)
+  participant Logic as FighterActor (Logic)
+  participant Vis as RendererSystem
+  participant Three as Three.js Scene
 
   Engine->>Main: tick(dt)
-  Main->>InputSystem: update()
-  Main->>AIController: update(dt)
-  Main->>P1: update(dt)
-  Main->>P2: update(dt)
+  Main->>Main: Input & AI
+  Main->>Logic: update(dt) / send(event)
+
+  Note over Main, Vis: One-way data flow
+  Main->>Vis: update()
+  Vis->>Logic: get visualState
+  Logic-->>Vis: { x, y, color }
+  Vis->>Three: mesh.position.set(...)
+
   Main->>Main: checkCollisions()
   Main->>HUD: updateUI()
-  
+
   Engine->>Main: render()
   Main->>Three: renderer.render()
 ```
@@ -136,5 +149,5 @@ sequenceDiagram
 
 - **Debounce hits properly**: add per-attack hit IDs or active-frames to prevent edge-case multi-hit.
 - **Move data**: drive damage/range/active frames from `fighters.json` (or a move manifest).
-- **Rollback netcode**: possible once logic is fully deterministic and input-driven.
-- **Persistence**: wire Drizzle/SQLite or IndexedDB to store keybinds, stats, match history.
+- **Rollback netcode**: possible now that logic is fully deterministic and decoupled from visuals.
+- **Persistence**: wire Drizzle with `sqlite-wasm` or `localStorage` (removed incompatible `better-sqlite3`).

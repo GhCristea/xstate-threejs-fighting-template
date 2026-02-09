@@ -1,72 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>XState Fighter</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #222; font-family: 'Courier New', Courier, monospace; }
-        
-        /* THE HUD LAYER */
-        #hud {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: space-between;
-            pointer-events: none; /* Let clicks pass through to canvas */
-            color: white;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #222;
+        font-family: 'Courier New', Courier, monospace;
+      }
 
-        .fighter-hud { width: 40%; }
-        .bar-container {
-            width: 100%;
-            height: 30px;
-            background: #444;
-            border: 2px solid #fff;
-            position: relative;
-        }
-        .hp-bar {
-            height: 100%;
-            background: #ffcc00; /* Street Fighter Yellow */
-            width: 100%;
-            transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        /* Player 1 fills Left to Right (default), Player 2 Right to Left */
-        #p2-hud { text-align: right; }
-        #p2-hud .hp-bar { float: right; background: #ff4400; }
+      /* THE HUD LAYER */
+      #hud {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: space-between;
+        pointer-events: none;
+        /* Let clicks pass through to canvas */
+        color: white;
+        text-transform: uppercase;
+        font-weight: bold;
+      }
 
-        #ko-screen {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 100px;
-            color: yellow;
-            text-shadow: 4px 4px red;
-            display: none; /* Hidden by default */
-        }
+      .fighter-hud {
+        width: 40%;
+      }
+
+      .bar-container {
+        width: 100%;
+        height: 30px;
+        background: #444;
+        border: 2px solid #fff;
+        position: relative;
+      }
+
+      .hp-bar {
+        height: 100%;
+        background: #ffcc00;
+        /* Street Fighter Yellow */
+        width: 100%;
+        transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* Player 1 fills Left to Right (default), Player 2 Right to Left */
+      #p2-hud {
+        text-align: right;
+      }
+
+      #p2-hud .hp-bar {
+        float: right;
+        background: #ff4400;
+      }
+
+      #ko-screen {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 100px;
+        color: yellow;
+        text-shadow: 4px 4px red;
+        display: none;
+        /* Hidden by default */
+      }
     </style>
-</head>
-<body>
+  </head>
+
+  <body>
     <div id="hud">
-        <div id="p1-hud" class="fighter-hud">
-            <div id="p1-name">Steven Seagal</div>
-            <div class="bar-container"><div id="p1-hp" class="hp-bar"></div></div>
+      <div id="p1-hud" class="fighter-hud">
+        <div id="p1-name">Steven Seagal</div>
+        <div class="bar-container">
+          <div id="p1-hp" class="hp-bar"></div>
         </div>
-        <div id="timer">99</div>
-        <div id="p2-hud" class="fighter-hud">
-            <div id="p2-name">Chuck Norris</div>
-            <div class="bar-container"><div id="p2-hp" class="hp-bar"></div></div>
+      </div>
+      <div id="timer">99</div>
+      <div id="p2-hud" class="fighter-hud">
+        <div id="p2-name">Chuck Norris</div>
+        <div class="bar-container">
+          <div id="p2-hp" class="hp-bar"></div>
         </div>
+      </div>
     </div>
 
     <div id="ko-screen">K.O.</div>
 
     <script type="module" src="/src/main.ts"></script>
-</body>
+  </body>
 </html>

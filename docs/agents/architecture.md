@@ -42,9 +42,9 @@ The engine emits two phases:
 Pseudo:
 
 ```ts
-engine.onTick((dt) => updateGameLogic(dt));
-engine.onRender(() => renderer.render(scene, camera));
-engine.start();
+engine.onTick(dt => updateGameLogic(dt))
+engine.onRender(() => renderer.render(scene, camera))
+engine.start()
 ```
 
 ### What belongs in the tick phase

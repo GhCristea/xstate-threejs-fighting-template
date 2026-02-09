@@ -9,33 +9,24 @@ LLMs follow concrete diffs better than abstract warnings. Prefer examples.
 ❌ Bad (hardcoded + coupled):
 
 ```ts
-import { createMachine } from 'xstate';
+import { createMachine } from 'xstate'
 
 export const machine = createMachine({
   context: { hp: 100 },
   actions: {
     render: () => mesh.material.color.set('red') // Three.js in logic
   }
-});
+})
 ```
 
 ✅ Good (hydrated + pure):
 
 ```ts
-import { setup, assign } from 'xstate';
+import { setup, assign } from 'xstate'
 
 export const fighterMachine = setup({
-  actions: {
-    takeDamage: assign({
-      hp: ({ context }) => Math.max(0, context.hp - 10)
-    })
-  }
-}).createMachine({
-  context: ({ input }) => ({
-    hp: input.stats.maxHp,
-    maxHp: input.stats.maxHp
-  })
-});
+  actions: { takeDamage: assign({ hp: ({ context }) => Math.max(0, context.hp - 10) }) }
+}).createMachine({ context: ({ input }) => ({ hp: input.stats.maxHp, maxHp: input.stats.maxHp }) })
 ```
 
 ## Three.js (Visuals)
@@ -47,18 +38,18 @@ export const fighterMachine = setup({
 ```ts
 // Inside a render loop
 if (keyboard.space) {
-  mesh.position.y += 1; // Physics inside variable render phase!
+  mesh.position.y += 1 // Physics inside variable render phase!
 }
-renderer.render(scene, camera);
+renderer.render(scene, camera)
 ```
 
 ✅ Good (state-driven visuals):
 
 ```ts
 // FighterActor.update(dt) - called during fixed tick
-const snap = this.actor.getSnapshot();
+const snap = this.actor.getSnapshot()
 if (snap.matches('hurt')) {
-  (this.mesh.material as THREE.MeshStandardMaterial).color.setHex(0xffffff);
+  ;(this.mesh.material as THREE.MeshStandardMaterial).color.setHex(0xffffff)
 }
 ```
 
@@ -69,14 +60,14 @@ if (snap.matches('hurt')) {
 ✅ Good:
 
 ```ts
-const engine = new GameEngine();
-engine.onTick((dt) => {
+const engine = new GameEngine()
+engine.onTick(dt => {
   // Fixed update logic
-});
+})
 engine.onRender(() => {
-  renderer.render(scene, camera);
-});
-engine.start();
+  renderer.render(scene, camera)
+})
+engine.start()
 ```
 
 ## Input
@@ -87,9 +78,9 @@ engine.start();
 
 ```ts
 // main.ts
-const intent = inputSystem.update();
+const intent = inputSystem.update()
 if (intent?.type === 'ATTACK') {
-  player.actor.send({ type: 'PUNCH', variant: intent.variant } as any);
+  player.actor.send({ type: 'PUNCH', variant: intent.variant } as any)
 }
 ```
 
@@ -102,7 +93,7 @@ if (intent?.type === 'ATTACK') {
 ```ts
 if (attacker.matches('attacking') && dist < HIT_RANGE) {
   if (!defender.matches('hurt') && !defender.matches('ko')) {
-    defenderActor.send({ type: 'HIT_RECEIVED' });
+    defenderActor.send({ type: 'HIT_RECEIVED' })
   }
 }
 ```
@@ -115,9 +106,9 @@ if (attacker.matches('attacking') && dist < HIT_RANGE) {
 
 ```ts
 // main.ts (composition root)
-const profile = await profileRepo.load();
+const profile = await profileRepo.load()
 // then send event to actor, don’t mutate context directly
-actor.send({ type: 'LOAD_PROFILE', profile } as any);
+actor.send({ type: 'LOAD_PROFILE', profile } as any)
 ```
 
 ## Folder boundaries
