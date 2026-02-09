@@ -15,7 +15,7 @@ This document is the "constitution" for the engine. If you change the loop, keep
 
 - **Where:** `src/logic/FighterActor.ts`
 - **Tech:** Three.js
-- **Owns:** Scene graph, meshes, materials, animations, camera
+- **Owns:** Scene graph objects (meshes/materials/animations) and state→visual mapping
 - **Must not:** Compute damage, decide move legality, or store canonical match state
 
 ### Nerves (inputs)
@@ -26,37 +26,36 @@ This document is the "constitution" for the engine. If you change the loop, keep
 
 ## The fixed timestep loop
 
-The loop logic is encapsulated in `src/core/GameEngine.ts`. It uses a semi-fixed timestep accumulator.
+The loop is owned by `src/core/GameEngine.ts`.
 
-- **`tick(dt)`**: Runs multiple times per frame if needed (logic, physics, AI). Fixed `dt` (e.g., 1/60).
-- **`render()`**: Runs once per frame (visuals).
+Design goals:
 
-Pseudo-implementation (in `GameEngine.ts`):
+- **Decoupled from Three.js**: no `THREE.Clock` dependency.
+- **Testable**: can inject a time source + scheduler.
+- **Stable under stalls**: clamp delta to avoid the spiral-of-death.
+
+The engine emits two phases:
+
+- **Tick**: fixed `dt` updates, may run multiple times per frame
+- **Render**: runs once per frame
+
+Pseudo:
 
 ```ts
-loop() {
-  requestID = requestAnimationFrame(loop);
-  const delta = clock.getDelta();
-  accumulator += delta;
-
-  while (accumulator >= fixedTimeStep) {
-    this.tick(fixedTimeStep); // Emits 'tick' event
-    accumulator -= fixedTimeStep;
-  }
-  
-  this.render(); // Emits 'render' event
-}
+engine.onTick((dt) => updateGameLogic(dt));
+engine.onRender(() => renderer.render(scene, camera));
+engine.start();
 ```
 
-### What belongs in the `tick` callback
+### What belongs in the tick phase
 
 - Read intents from `InputSystem`
 - Run AI decisions (throttled)
 - Run collisions + send `HIT_RECEIVED`
 - Read snapshots for HUD percentages
-- Update actor logic (state transitions)
+- Update actor visuals (if your visuals are state-driven and cheap)
 
-### What belongs in the `render` callback
+### What belongs in the render phase
 
 - `renderer.render(scene, camera)`
 - Non-authoritative interpolation (if added later)

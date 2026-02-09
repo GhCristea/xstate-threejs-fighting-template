@@ -49,7 +49,7 @@ Combos are detected via the input buffer; currently registered in `src/main.ts`:
 src/
   main.ts                    # Composition root (wires engine, systems, HUD)
   core/
-    GameEngine.ts            # Fixed-timestep loop + event dispatching
+    GameEngine.ts            # Fixed-timestep loop + tick/render callbacks (no Three.js dependency)
   data/
     fighters.json            # Character definitions (maxHp, etc.)
   input/
@@ -66,17 +66,16 @@ src/
 
 ### Core loop
 
-- **`GameEngine`** (`src/core/GameEngine.ts`) manages the loop using `requestAnimationFrame`.
-- It maintains a fixed timestep (`1/60`) accumulator for logic updates (`tick`).
-- It triggers a render callback once per frame.
-- `main.ts` wires these callbacks to the actual game logic and renderer.
+- **`GameEngine`** (`src/core/GameEngine.ts`) owns the fixed-timestep accumulator and scheduling.
+- `GameEngine` is intentionally **decoupled** from Three.js; it uses an injected (or default) time source + scheduler.
+- `main.ts` registers a tick callback (logic) and a render callback (renderer).
 
 Key files:
 
 - `src/core/GameEngine.ts`: reusable loop logic.
 - `src/main.ts`: wires systems together.
-- `src/logic/FighterActor.ts`: "entity" wrapper; keeps composition clean.
-- `src/logic/fighterMachine.ts`: game rules + HP + KO.
+- `src/logic/FighterActor.ts`: "entity" wrapper.
+- `src/logic/fighterMachine.ts`: rules + HP + KO.
 
 ### Health + KO
 
@@ -132,3 +131,10 @@ sequenceDiagram
   Engine->>Main: render()
   Main->>Three: renderer.render()
 ```
+
+## Notes / next upgrades
+
+- **Debounce hits properly**: add per-attack hit IDs or active-frames to prevent edge-case multi-hit.
+- **Move data**: drive damage/range/active frames from `fighters.json` (or a move manifest).
+- **Rollback netcode**: possible once logic is fully deterministic and input-driven.
+- **Persistence**: wire Drizzle/SQLite or IndexedDB to store keybinds, stats, match history.
