@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Playground (dev tool)</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #0b0d10;
+        color: #e6edf3;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      }
+      #app {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+      .hud {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 10px 12px;
+        background: rgba(20, 24, 28, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        backdrop-filter: blur(8px);
+      }
+      .hud button {
+        background: #1f6feb;
+        border: none;
+        color: white;
+        padding: 8px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .hud button.secondary {
+        background: #30363d;
+      }
+      .hud .label {
+        opacity: 0.9;
+        font-size: 13px;
+      }
+      .hint {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        padding: 8px 10px;
+        font-size: 12px;
+        opacity: 0.75;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <div class="hud">
+        <span class="label" id="tool">Tool: select</span>
+        <button id="spawn">Spawn cube</button>
+        <button id="toggle-tool" class="secondary">Toggle tool</button>
+        <button id="pause" class="secondary">Pause</button>
+      </div>
+      <div class="hint">Dev tool playground. Click “Spawn cube”, then click cubes to select. Press Space to toggle tool.</div>
+    </div>
+
+    <script type="module" src="/src/playground/main.ts"></script>
+  </body>
+</html>
