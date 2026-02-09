@@ -27,13 +27,50 @@ floor.rotation.x = -Math.PI / 2;
 scene.add(floor);
 
 // --- INIT ACTORS ---
-// 1. Player (Seagal)
-const player = new FighterActor(scene, new THREE.Vector3(-2, 1, 0), 0x00ff00, fighterData.steven_seagal);
+// 1. Player (Seagal) - LOGIC ONLY
+const player = new FighterActor(
+    { x: -2, y: 1 }, 
+    0x00ff00, 
+    fighterData.steven_seagal
+);
 player.start();
 
-// 2. NPC (Chuck)
-const npc = new FighterActor(scene, new THREE.Vector3(2, 1, 0), 0xff0000, fighterData.chuck_norris);
+// 2. NPC (Chuck) - LOGIC ONLY
+const npc = new FighterActor(
+    { x: 2, y: 1 }, 
+    0xff0000, 
+    fighterData.chuck_norris
+);
 npc.start();
+
+// --- RENDERER SYSTEM (The Glue) ---
+// This simple system maps Logic Actors -> Visual Meshes
+class RendererSystem {
+    private meshes: Map<FighterActor, THREE.Mesh> = new Map();
+
+    constructor(scene: THREE.Scene) {
+        this.createMesh(player);
+        this.createMesh(npc);
+    }
+
+    private createMesh(actor: FighterActor) {
+        const geometry = new THREE.BoxGeometry(1, 2, 0.5);
+        const material = new THREE.MeshStandardMaterial({ color: actor.baseColor });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+        this.meshes.set(actor, mesh);
+    }
+
+    update() {
+        for (const [actor, mesh] of this.meshes) {
+            const state = actor.visualState;
+            mesh.position.set(state.x, state.y, 0); // Logic is 2D, Visual is 3D
+            (mesh.material as THREE.MeshStandardMaterial).color.setHex(state.color);
+        }
+    }
+}
+
+const renderSystem = new RendererSystem(scene);
 
 // --- INIT SYSTEMS ---
 const inputSystem = new InputSystem();
@@ -59,7 +96,7 @@ engine.onTick((dt) => {
         if (intent.type === 'COMBO') player.send({ type: 'SPECIAL_MOVE', name: intent.name });
         if (intent.type === 'ATTACK') player.send({ type: 'PUNCH', variant: intent.variant });
         if (intent.type === 'BLOCK') player.send({ type: 'BLOCK' });
-
+        
         if (intent.type === 'MOVEMENT') {
             player.move(intent.vector, dt);
         }
@@ -73,9 +110,8 @@ engine.onTick((dt) => {
     // 2. Update NPC
     aiController.update(dt);
 
-    // 3. Sync Visuals
-    player.update(dt);
-    npc.update(dt);
+    // 3. Update Visuals (One-way binding)
+    renderSystem.update();
 
     // 4. Collisions
     checkCollisions();
@@ -93,14 +129,16 @@ engine.start();
 function checkCollisions() {
     const pState = player.actor.getSnapshot();
     const nState = npc.actor.getSnapshot();
-    const dist = player.position.distanceTo(npc.position);
+    
+    // Simple 1D distance check
+    const dist = Math.abs(player.position.x - npc.position.x);
     const HIT_RANGE = 1.5;
 
     // Player Hits NPC
     if (pState.matches('attacking') && dist < HIT_RANGE) {
         if (!nState.matches('hurt') && !nState.matches('blocking') && !nState.matches('counterWindow') && !nState.matches('ko')) {
             npc.send({ type: 'HIT_RECEIVED' });
-            npc.mesh.position.x += 0.3;
+            // Logic-only pushback would go here, e.g. npc.shove(0.3)
         }
     }
 
@@ -108,7 +146,6 @@ function checkCollisions() {
     if (nState.matches('attacking') && dist < HIT_RANGE) {
         if (!pState.matches('hurt') && !pState.matches('blocking') && !pState.matches('counterWindow') && !pState.matches('ko')) {
             player.send({ type: 'HIT_RECEIVED' });
-            player.mesh.position.x -= 0.3;
         }
     }
 }

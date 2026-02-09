@@ -10,8 +10,7 @@
   "dependencies": {
     "three": "^0.182.0 ",
     "xstate": "^5.26.0",
-    "drizzle-orm": "^0.45.1",
-    "better-sqlite3": "^12.6.2"
+    "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

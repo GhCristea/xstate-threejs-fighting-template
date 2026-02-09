@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { createActor, Actor } from 'xstate';
 import { fighterMachine } from './fighterMachine';
 import { FighterEvent } from './types';
@@ -6,23 +5,17 @@ import { FighterEvent } from './types';
 export { FighterEvent };
 
 export class FighterActor {
-    mesh: THREE.Mesh;
     actor: Actor<any>;
-    scene: THREE.Scene;
     baseColor: number;
+    
+    // Logic state (position x, y)
+    private pos: { x: number, y: number };
 
-    constructor(scene: THREE.Scene, startPos: THREE.Vector3, color: number, fighterData: any) {
-        this.scene = scene;
+    constructor(startPos: { x: number, y: number }, color: number, fighterData: any) {
         this.baseColor = color;
-
-        // 1. Setup Visuals
-        const geometry = new THREE.BoxGeometry(1, 2, 0.5);
-        const material = new THREE.MeshStandardMaterial({ color: color });
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.position.copy(startPos);
-        this.scene.add(this.mesh);
-
-        // 2. Setup Logic
+        this.pos = { x: startPos.x, y: startPos.y };
+        
+        // Setup Logic
         this.actor = createActor(fighterMachine, {
             input: fighterData
         });
@@ -33,21 +26,20 @@ export class FighterActor {
     }
 
     send(event: FighterEvent) {
-        // Now safer because the machine actually accepts these events
         this.actor.send(event);
     }
 
+    // No visual update here - pure logic update
     update(dt: number) {
-        const snapshot = this.actor.getSnapshot();
-        this.syncVisuals(snapshot);
+        // Logic updates (timers, cooldowns) are handled by XState automatically or via tick events if needed
     }
 
     move(vector: { x: number; y: number }, dt: number) {
         const snapshot = this.actor.getSnapshot();
-
+        
         if (snapshot.matches('idle') || snapshot.matches('walking')) {
-            this.mesh.position.x += vector.x * 5 * dt;
-            this.mesh.position.x = Math.max(-9, Math.min(9, this.mesh.position.x));
+            this.pos.x += vector.x * 5 * dt;
+            this.pos.x = Math.max(-9, Math.min(9, this.pos.x));
 
             if (vector.x !== 0) {
                 this.send({ type: 'WALK' });
@@ -57,24 +49,26 @@ export class FighterActor {
         }
     }
 
-    private syncVisuals(snapshot: any) {
-        const state = snapshot.value;
-        const material = this.mesh.material as THREE.MeshStandardMaterial;
-
-        if (state === 'attacking') {
-            material.color.setHex(0xff0000);
-        } else if (state === 'counterWindow' || state === 'blocking') {
-            material.color.setHex(0xffff00);
-        } else if (state === 'hurt') {
-            material.color.setHex(0xffffff);
-        } else if (state === 'reversal') {
-            material.color.setHex(0x550000);
-        } else {
-            material.color.setHex(this.baseColor);
-        }
+    // Pure logic getter
+    get position() {
+        return this.pos;
     }
 
-    get position() {
-        return this.mesh.position;
+    // New: Derived state for renderer to consume
+    get visualState() {
+        const snapshot = this.actor.getSnapshot();
+        const state = snapshot.value;
+        let color = this.baseColor;
+
+        if (state === 'attacking') color = 0xff0000;
+        else if (state === 'counterWindow' || state === 'blocking') color = 0xffff00;
+        else if (state === 'hurt') color = 0xffffff;
+        else if (state === 'reversal') color = 0x550000;
+
+        return {
+            x: this.pos.x,
+            y: this.pos.y,
+            color
+        };
     }
 }
