@@ -95,16 +95,16 @@ Key files:
 
 ```mermaid
 flowchart LR
-  Input[InputSystem\n(keyboard + buffer)] --> Main[main.ts\nfixed-timestep loop]
-  AI[AIController] --> Main
+  Input["InputSystem<br/>(keyboard + buffer)"] --> Main["main.ts<br/>fixed-timestep loop"]
+  AI["AIController"] --> Main
 
-  Main --> P1[FighterActor: Player\n(mesh + xstate actor)]
-  Main --> P2[FighterActor: NPC\n(mesh + xstate actor)]
+  Main --> P1["FighterActor: Player<br/>(mesh + xstate actor)"]
+  Main --> P2["FighterActor: NPC<br/>(mesh + xstate actor)"]
 
-  P1 --> Three[Three.js\nRenderer]
+  P1 --> Three["Three.js<br/>Renderer"]
   P2 --> Three
 
-  Main --> HUD[HUD\n(index.html DOM)]
+  Main --> HUD["HUD<br/>(index.html DOM)"]
 ```
 
 ### Fighter state machine
