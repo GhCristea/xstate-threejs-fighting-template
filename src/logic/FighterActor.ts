@@ -1,14 +1,9 @@
 import * as THREE from 'three';
 import { createActor, Actor } from 'xstate';
 import { fighterMachine } from './fighterMachine';
+import { FighterEvent } from './types';
 
-export type FighterEvent =
-    | { type: 'PUNCH'; variant: 'light' | 'heavy' }
-    | { type: 'BLOCK' }
-    | { type: 'SPECIAL_MOVE'; name: string }
-    | { type: 'WALK' }
-    | { type: 'STOP' }
-    | { type: 'HIT_RECEIVED' };
+export { FighterEvent };
 
 export class FighterActor {
     mesh: THREE.Mesh;
@@ -38,8 +33,8 @@ export class FighterActor {
     }
 
     send(event: FighterEvent) {
-        // Keep the escape hatch in one place until we decide how strict we want XState typing.
-        this.actor.send(event as any);
+        // Now safer because the machine actually accepts these events
+        this.actor.send(event);
     }
 
     update(dt: number) {
