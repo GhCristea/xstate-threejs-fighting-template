@@ -3,6 +3,7 @@ import { InputSystem } from './input/InputSystem';
 import fighterData from './data/fighters.json';
 import { FighterActor } from './logic/FighterActor';
 import { AIController } from './logic/AIController';
+import { GameEngine } from './core/GameEngine';
 
 // --- INIT SCENE ---
 const scene = new THREE.Scene();
@@ -59,25 +60,9 @@ const p2HpBar = document.getElementById('p2-hp');
 const koScreen = document.getElementById('ko-screen');
 
 // --- GAME LOOP ---
-const CLOCK = new THREE.Clock();
-const FIXED_TIME_STEP = 1 / 60;
-let accumulator = 0;
+const engine = new GameEngine();
 
-function animate() {
-    requestAnimationFrame(animate);
-
-    const deltaTime = CLOCK.getDelta();
-    accumulator += deltaTime;
-
-    while (accumulator >= FIXED_TIME_STEP) {
-        updateGameLogic(FIXED_TIME_STEP);
-        accumulator -= FIXED_TIME_STEP;
-    }
-
-    renderer.render(scene, camera);
-}
-
-function updateGameLogic(dt: number) {
+engine.onTick((dt) => {
     // 1. Update Player
     const intent = inputSystem.update();
     if (intent) {
@@ -107,7 +92,13 @@ function updateGameLogic(dt: number) {
 
     // 5. Update UI
     updateUI();
-}
+});
+
+engine.onRender(() => {
+    renderer.render(scene, camera);
+});
+
+engine.start();
 
 function checkCollisions() {
     const pState = player.actor.getSnapshot();
@@ -146,8 +137,6 @@ function updateUI() {
         if (koScreen) koScreen.style.display = 'block';
     }
 }
-
-animate();
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
