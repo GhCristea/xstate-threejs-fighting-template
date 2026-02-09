@@ -1,7 +1,17 @@
 import * as THREE from 'three'
+import { createActor } from 'xstate'
 import { GameEngine } from '../core/GameEngine'
 import { createPlaygroundMachine } from './playground.machine'
 import { createSceneWorld } from './world'
+
+// Devtools: Stately Inspector (XState v5)
+// Note: createBrowserInspector may open a popup/tab; allow popups for localhost.
+let inspector: { inspect: any } | null = null
+if (import.meta.env.DEV) {
+  // Lazy import so prod builds don't pull inspector code.
+  const mod = await import('@statelyai/inspect')
+  inspector = mod.createBrowserInspector()
+}
 
 const app = document.getElementById('app')
 if (!app) throw new Error('Missing #app')
@@ -36,7 +46,10 @@ const world = createSceneWorld({ scene, camera, domElement: renderer.domElement 
 
 // --- State machine owns "tool" state; world is an adapter ---
 const machine = createPlaygroundMachine({ world })
-const service = machine.start()
+const service = createActor(machine, {
+  inspect: inspector?.inspect
+})
+service.start()
 
 // --- Simple HUD wiring ---
 const toolLabel = document.getElementById('tool')
