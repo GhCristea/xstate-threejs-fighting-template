@@ -26,15 +26,16 @@ scene.add(floor)
 
 // --- INIT ACTORS ---
 // 1. Player (Seagal) - LOGIC ONLY
-const player = new FighterActor({ x: -2, y: 1 }, 0x00ff00, fighterData.steven_seagal)
+const player = new FighterActor({ x: -4, y: 1 }, 0x00ff00, fighterData.steven_seagal)
 player.start()
+console.log('Player Initial Context:', player.actor.getSnapshot().context)
 
 // 2. NPC (Chuck) - LOGIC ONLY
-const npc = new FighterActor({ x: 2, y: 1 }, 0xff0000, fighterData.chuck_norris)
+const npc = new FighterActor({ x: 4, y: 1 }, 0xff0000, fighterData.chuck_norris)
 npc.start()
 
 // --- RENDERER SYSTEM (The Glue) ---
-const renderSystem = new RendererSystem(scene, [player, npc])
+const renderSystem = new RendererSystem(scene, camera, renderer, [player, npc])
 
 // --- INIT SYSTEMS ---
 const inputSystem = new InputSystem()
@@ -54,6 +55,17 @@ const koScreen = document.getElementById('ko-screen')
 const engine = new GameEngine()
 
 engine.onTick(dt => {
+  const p1State = player.actor.getSnapshot()
+  const p2State = npc.actor.getSnapshot()
+
+  // Game Over Check
+  if (p1State.matches('ko') || p2State.matches('ko')) {
+    // Still render and update physics/visuals if needed, but stop logic inputs
+    renderSystem.update(dt)
+    updateUI()
+    return
+  }
+
   // 1. Update Player
   const intent = inputSystem.update()
   if (intent) {
@@ -74,8 +86,8 @@ engine.onTick(dt => {
   // 2. Update NPC
   aiController.update(dt)
 
-  // 3. Update Visuals (One-way binding)
-  renderSystem.update()
+  // 3. Update Visuals & RENDER (RenderSystem now handles rendering)
+  renderSystem.update(dt)
 
   // 4. Collisions
   checkCollisions()
@@ -85,7 +97,7 @@ engine.onTick(dt => {
 })
 
 engine.onRender(() => {
-  renderer.render(scene, camera)
+  renderSystem.render()
 })
 
 engine.start()
@@ -100,26 +112,12 @@ function checkCollisions() {
 
   // Player Hits NPC
   if (pState.matches('attacking') && dist < HIT_RANGE) {
-    if (
-      !nState.matches('hurt')
-      && !nState.matches('blocking')
-      && !nState.matches('counterWindow')
-      && !nState.matches('ko')
-    ) {
-      npc.send({ type: 'HIT_RECEIVED' })
-    }
+    npc.send({ type: 'HIT_RECEIVED' })
   }
 
   // NPC Hits Player
   if (nState.matches('attacking') && dist < HIT_RANGE) {
-    if (
-      !pState.matches('hurt')
-      && !pState.matches('blocking')
-      && !pState.matches('counterWindow')
-      && !pState.matches('ko')
-    ) {
-      player.send({ type: 'HIT_RECEIVED' })
-    }
+    player.send({ type: 'HIT_RECEIVED' })
   }
 }
 
@@ -133,13 +131,14 @@ function updateUI() {
   if (p1HpBar) p1HpBar.style.width = `${p1Pc}%`
   if (p2HpBar) p2HpBar.style.width = `${p2Pc}%`
 
+  if (p1HpBar) p1HpBar.style.width = `${p1Pc}%`
+  if (p2HpBar) p2HpBar.style.width = `${p2Pc}%`
+
   if (p1State.matches('ko') || p2State.matches('ko')) {
     if (koScreen) koScreen.style.display = 'block'
   }
 }
 
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight
-  camera.updateProjectionMatrix()
-  renderer.setSize(window.innerWidth, window.innerHeight)
+  renderSystem.resize(window.innerWidth, window.innerHeight)
 })

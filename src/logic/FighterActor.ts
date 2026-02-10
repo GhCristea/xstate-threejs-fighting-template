@@ -60,7 +60,8 @@ export class FighterActor {
     let color = this.baseColor
 
     if (state === 'attacking') color = 0xff0000
-    else if (state === 'counterWindow' || state === 'blocking') color = 0xffff00
+    else if (state === 'counterWindow') color = 0xffff00
+    else if (state === 'dodging') color = 0x0000ff
     else if (state === 'hurt') color = 0xffffff
     else if (state === 'reversal') color = 0x550000
 

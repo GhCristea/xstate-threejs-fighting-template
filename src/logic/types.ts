@@ -7,6 +7,7 @@ export type FighterEvent =
   | { type: 'WALK' }
   | { type: 'STOP' }
   | { type: 'HIT_RECEIVED' }
+  | { type: 'DODGE' }
 
 export type FighterContext = {
   name: string

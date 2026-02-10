@@ -19,19 +19,29 @@ export const fighterMachine = setup({
   states: {
     idle: {
       on: {
-        PUNCH: 'attacking',
-        BLOCK: 'counterWindow',
-        SPECIAL_MOVE: 'specialMove',
-        WALK: 'walking',
-        HIT_RECEIVED: 'hurt'
+        PUNCH: { target: 'attacking' },
+        BLOCK: { target: 'counterWindow' },
+        SPECIAL_MOVE: { target: 'specialMove' },
+        WALK: { target: 'walking' },
+        HIT_RECEIVED: { target: 'hurt' },
+        DODGE: { target: 'dodging' }
       }
     },
-    walking: { on: { PUNCH: 'attacking', BLOCK: 'counterWindow', STOP: 'idle', HIT_RECEIVED: 'hurt' } },
-    counterWindow: { after: { 300: { target: 'idle' } }, on: { HIT_RECEIVED: 'reversal' } },
-    reversal: { entry: () => console.log('Momentum Redirected!'), after: { 500: 'idle' } },
-    attacking: { after: { 400: 'idle' }, on: { HIT_RECEIVED: 'hurt' } },
-    specialMove: { after: { 1000: 'idle' }, on: { HIT_RECEIVED: 'hurt' } },
+    attacking: { on: { HIT_RECEIVED: { target: 'hurt' } }, after: { 400: { target: 'idle' } } },
+    counterWindow: { on: { HIT_RECEIVED: { target: 'reversal' } }, after: { 300: { target: 'idle' } } },
+    specialMove: { on: { HIT_RECEIVED: { target: 'hurt' } }, after: { 1000: { target: 'idle' } } },
+    walking: {
+      on: {
+        PUNCH: { target: 'attacking' },
+        BLOCK: { target: 'counterWindow' },
+        STOP: { target: 'idle' },
+        HIT_RECEIVED: { target: 'hurt' },
+        DODGE: { target: 'dodging' }
+      }
+    },
     hurt: { entry: 'takeDamage', after: { 500: [{ guard: 'isDead', target: 'ko' }, { target: 'idle' }] } },
-    ko: { entry: () => console.log('KNOCKOUT!'), type: 'final' }
+    dodging: { on: { HIT_RECEIVED: { target: 'hurt' } }, after: { 200: { target: 'idle' } } },
+    reversal: { entry: () => console.log('Momentum Redirected!'), after: { 500: { target: 'idle' } } },
+    ko: { type: 'final', entry: () => console.log('KNOCKOUT!') }
   }
 })
