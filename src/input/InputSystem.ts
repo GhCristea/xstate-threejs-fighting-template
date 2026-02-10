@@ -16,6 +16,7 @@ export type Intent =
   | { type: 'COMBO'; name: string }
   | { type: 'BLOCK' }
   | { type: 'ATTACK'; variant: AttackVariant }
+  | { type: 'ULTIMATE' }
   | { type: 'MOVEMENT'; vector: { x: number; y: number } }
 
 type BufferedFrame = { frame: number; actions: Action[] }
@@ -68,6 +69,7 @@ export class InputSystem {
 
     if (combo) return { type: 'COMBO', name: combo }
     if (activeActions.includes('BLOCK')) return { type: 'BLOCK' }
+    if (activeActions.includes('ULTIMATE')) return { type: 'ULTIMATE' }
 
     // Prefer heavy when both are pressed.
     if (activeActions.includes('HEAVY_PUNCH')) return { type: 'ATTACK', variant: 'heavy' }
@@ -76,12 +78,10 @@ export class InputSystem {
     const movement = {
       x:
         activeActions.includes('RIGHT') ? 1
-        : activeActions.includes('LEFT') ? -1
-        : 0,
+        : activeActions.includes('LEFT') ? -1\n        : 0,
       y:
         activeActions.includes('UP') ? 1
-        : activeActions.includes('DOWN') ? -1
-        : 0
+        : activeActions.includes('DOWN') ? -1\n        : 0
     }
 
     if (movement.x !== 0 || movement.y !== 0) return { type: 'MOVEMENT', vector: movement }

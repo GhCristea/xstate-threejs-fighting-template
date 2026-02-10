@@ -20,10 +20,26 @@ export class RendererSystem {
   }
 
   update() {
+    let seagalUltActive = false
+
     for (const [actor, mesh] of this.meshes) {
+      const snapshot = actor.actor.getSnapshot()
       const state = actor.visualState
+      
       mesh.position.set(state.x, state.y, 0) // Logic is 2D, Visual is 3D
       ;(mesh.material as THREE.MeshStandardMaterial).color.setHex(state.color)
+
+      // Visual Effect Trigger: Dojo Gravity
+      if (snapshot.matches('ultimate') && snapshot.context.name === 'Steven Seagal') {
+        seagalUltActive = true
+      }
+    }
+
+    if (seagalUltActive) {
+      // Dojo Gravity: Screen Tilt
+      this.scene.rotation.z = THREE.MathUtils.lerp(this.scene.rotation.z, Math.PI * 0.05, 0.1)
+    } else {
+      this.scene.rotation.z = THREE.MathUtils.lerp(this.scene.rotation.z, 0, 0.1)
     }
   }
 }

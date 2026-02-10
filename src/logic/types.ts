@@ -4,9 +4,10 @@ export type FighterEvent =
   | { type: 'PUNCH'; variant: AttackVariant }
   | { type: 'BLOCK' }
   | { type: 'SPECIAL_MOVE'; name: string }
+  | { type: 'ULTIMATE' }
   | { type: 'WALK' }
   | { type: 'STOP' }
-  | { type: 'HIT_RECEIVED' }
+  | { type: 'HIT_RECEIVED'; damage?: number }
 
 export type FighterContext = {
   name: string
@@ -15,6 +16,7 @@ export type FighterContext = {
   stamina: number
   regenRate: number
   currentMove: string | null
+  ultimateMeter: number
 }
 
 export type FighterInput = { name: string; stats: { maxHp: number; staminaRegen: number } }
