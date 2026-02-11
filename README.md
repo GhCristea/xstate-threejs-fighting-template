@@ -125,6 +125,10 @@ flowchart LR
 ### Fixed-timestep update sequence
 
 ```mermaid
+---
+config:
+  theme: dark
+---
 sequenceDiagram
   participant Engine as GameEngine
   participant Main as main.ts
